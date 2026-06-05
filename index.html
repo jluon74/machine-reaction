@@ -1,180 +1,688 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachable Machine Image Classifier</title>
-    <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --background: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPS — Rock Paper Scissors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--background);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+  :root {
+    --ink: #0a0a0a;
+    --paper: #f5f0e8;
+    --cream: #ede8df;
+    --accent: #e63329;
+    --accent2: #1a3a8f;
+    --muted: #7a7570;
+    --win: #1a6f3c;
+    --lose: #c02020;
+    --tie: #8a6800;
+  }
 
-        .container {
-            background-color: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-        }
+  html, body {
+    height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+  }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
-        }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
 
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 2rem;
-        }
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+  }
 
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
-        }
+  /* Header */
+  header {
+    width: 100%;
+    max-width: 780px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 32px 0;
+  }
 
-        button:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+  }
 
-        button:active {
-            transform: translateY(1px);
-        }
+  .logo span { color: var(--accent); }
 
-        #webcam-container {
-            margin: 1.5rem auto;
-            border-radius: 12px;
-            overflow: hidden;
-            background-color: #e2e8f0;
-            width: 200px;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-        }
+  .mode-pill {
+    background: none;
+    border: 1.5px solid var(--ink);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.18s, color 0.18s;
+  }
 
-        #webcam-container canvas {
-            display: block;
-            border-radius: 12px;
-        }
+  .mode-pill:hover { background: var(--ink); color: var(--paper); }
 
-        #label-container {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+  /* Main layout */
+  main {
+    width: 100%;
+    max-width: 780px;
+    padding: 24px 32px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-        #label-container div {
-            background-color: #f1f5f9;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            text-align: left;
-            color: #334155;
-            border-left: 4px solid var(--primary-color);
-        }
-    </style>
+  /* Scoreboard */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .score-cell {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .score-cell:nth-child(2) {
+    border-left: 1px solid rgba(255,255,255,0.12);
+    border-right: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  .score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+
+  #score-you { color: #7eb8ff; }
+  #score-bot { color: #ff8a84; }
+
+  /* Arena */
+  .arena {
+    display: grid;
+    grid-template-columns: 1fr 48px 1fr;
+    gap: 0;
+    align-items: center;
+  }
+
+  .arena-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .panel-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .cam-frame {
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .cam-frame video,
+  .cam-frame canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scaleX(-1);
+  }
+
+  .cam-frame canvas { transform: none; }
+
+  .cam-placeholder {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 16px;
+    line-height: 1.6;
+  }
+
+  .bot-frame {
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    transition: transform 0.15s;
+  }
+
+  .bot-frame.bounce {
+    animation: bounce 0.3s ease;
+  }
+
+  @keyframes bounce {
+    0%,100%{transform:scale(1)} 50%{transform:scale(1.12)}
+  }
+
+  .vs-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .move-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    min-height: 20px;
+    text-align: center;
+  }
+
+  /* Confidence bar */
+  .conf-wrap {
+    width: 200px;
+    height: 3px;
+    background: var(--cream);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .conf-fill {
+    height: 3px;
+    width: 0%;
+    background: var(--accent2);
+    border-radius: 2px;
+    transition: width 0.2s;
+  }
+
+  /* Status */
+  .status-block {
+    text-align: center;
+    padding: 18px;
+    background: var(--cream);
+    border-radius: 4px;
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .status-main {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+
+  .status-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .status-win { color: var(--win); }
+  .status-lose { color: var(--lose); }
+  .status-tie { color: var(--tie); }
+
+  /* Controls */
+  .controls { display: flex; flex-direction: column; gap: 10px; }
+
+  .play-btn {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.1s;
+  }
+
+  .play-btn:hover { background: #2a2a2a; }
+  .play-btn:active { transform: scale(0.99); }
+  .play-btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+  /* Manual move buttons */
+  .move-buttons {
+    display: none;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .move-buttons.visible { display: grid; }
+
+  .move-btn {
+    padding: 14px;
+    font-size: 2rem;
+    background: var(--cream);
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .move-btn:hover { background: var(--ink); }
+  .move-btn:hover .move-name { color: var(--paper); }
+  .move-btn:active { transform: scale(0.97); }
+
+  .move-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: auto;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+
+  /* Divider line */
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Round history dots */
+  .history-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 12px;
+  }
+
+  .h-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .h-dot.win { background: var(--win); }
+  .h-dot.lose { background: var(--lose); }
+  .h-dot.tie { background: var(--tie); }
+
+  @media (max-width: 560px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .cam-frame, .bot-frame { width: 140px; height: 140px; }
+    .conf-wrap { width: 140px; }
+    .bot-frame { font-size: 56px; }
+  }
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Teachable Machine Image Model</h1>
-        <p class="subtitle">Allow webcam access and click start to test your model.</p>
-        
-        <button type="button" onclick="init()">Start Camera</button>
-        
-        <div id="webcam-container"></div>
-        <div id="label-container"></div>
+<header>
+  <div class="logo">R<span>P</span>S</div>
+  <button class="mode-pill" id="mode-btn" onclick="toggleMode()">Switch to buttons</button>
+</header>
+
+<main>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="score-cell">
+      <div class="score-label">You</div>
+      <div class="score-num" id="score-you">0</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-label">Ties</div>
+      <div class="score-num" style="color:#ccc" id="score-tie">0</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-label">Bot</div>
+      <div class="score-num" id="score-bot">0</div>
+    </div>
+  </div>
+
+  <!-- Round history -->
+  <div class="history-row" id="history-row"></div>
+
+  <hr class="divider">
+
+  <!-- Arena -->
+  <div class="arena">
+    <div class="arena-panel">
+      <div class="panel-label">You</div>
+      <div class="cam-frame" id="cam-frame">
+        <div class="cam-placeholder" id="cam-ph">Enable your<br>camera to play</div>
+      </div>
+      <div class="conf-wrap" id="conf-wrap" style="display:none">
+        <div class="conf-fill" id="conf-fill"></div>
+      </div>
+      <div class="move-label" id="your-label">—</div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    
-    <script type="text/javascript">
-        // IMPORTANT: Replace this with your actual uploaded model URL from Teachable Machine
-        // Example: "https://teachablemachine.withgoogle.com/models/XyZ12345/"
-        const URL = "./my_model/";
+    <div class="vs-badge">VS</div>
 
-        let model, webcam, labelContainer, maxPredictions;
+    <div class="arena-panel">
+      <div class="panel-label">Bot</div>
+      <div class="bot-frame" id="bot-frame">🤖</div>
+      <div class="conf-wrap" style="visibility:hidden"><div class="conf-fill"></div></div>
+      <div class="move-label" id="bot-label">—</div>
+    </div>
+  </div>
 
-        // Load the image model and setup the webcam
-        async function init() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+  <!-- Status -->
+  <div class="status-block">
+    <div class="status-main" id="status-main">Ready</div>
+    <div class="status-sub" id="status-sub">Enable camera or switch to button mode</div>
+  </div>
 
-            // Load the model and metadata
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+  <!-- Controls -->
+  <div class="controls">
+    <button class="play-btn" id="play-btn" onclick="handlePlay()">Enable Camera</button>
+    <div class="move-buttons" id="move-buttons">
+      <button class="move-btn" onclick="playMove('Rock')">✊<span class="move-name">Rock</span></button>
+      <button class="move-btn" onclick="playMove('Paper')">✋<span class="move-name">Paper</span></button>
+      <button class="move-btn" onclick="playMove('Scissors')">✌️<span class="move-name">Scissors</span></button>
+    </div>
+  </div>
 
-            // Setup webcam
-            const flip = true; // whether to flip the webcam
-            webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-            await webcam.setup(); // request access to the webcam
-            await webcam.play();
-            window.requestAnimationFrame(loop);
+</main>
 
-            // Append webcam canvas to DOM
-            const webcamContainer = document.getElementById("webcam-container");
-            webcamContainer.innerHTML = ""; // Clear placeholder
-            webcamContainer.appendChild(webcam.canvas);
-            
-            // Setup label container
-            labelContainer = document.getElementById("label-container");
-            labelContainer.innerHTML = ""; // Clear old contents
-            for (let i = 0; i < maxPredictions; i++) { 
-                labelContainer.appendChild(document.createElement("div"));
-            }
+<footer>Rock · Paper · Scissors &mdash; Camera Edition</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script>
+const MOVES = ['Rock','Paper','Scissors'];
+const EMOJI = {Rock:'✊',Paper:'✋',Scissors:'✌️'};
+const scores = {you:0,tie:0,bot:0};
+let mode = 'camera'; // 'camera' | 'buttons'
+let camReady = false, isPlaying = false;
+let stream = null, tmModel = null, tmWebcam = null;
+let detectedMove = 'None';
+let loopActive = false;
+let history = [];
+
+const $ = id => document.getElementById(id);
+
+function setStatus(main, sub='', cls=''){
+  $('status-main').textContent = main;
+  $('status-main').className = 'status-main' + (cls ? ' status-'+cls : '');
+  $('status-sub').textContent = sub;
+}
+
+function updateScores(){
+  $('score-you').textContent = scores.you;
+  $('score-tie').textContent = scores.tie;
+  $('score-bot').textContent = scores.bot;
+}
+
+function addHistory(result){
+  history.push(result);
+  if(history.length > 30) history.shift();
+  const row = $('history-row');
+  row.innerHTML = history.map(r=>`<div class="h-dot ${r}"></div>`).join('');
+}
+
+function botPick(){ return MOVES[Math.floor(Math.random()*3)]; }
+
+function judge(p,b){
+  if(p===b) return 'tie';
+  if((p==='Rock'&&b==='Scissors')||(p==='Paper'&&b==='Rock')||(p==='Scissors'&&b==='Paper')) return 'win';
+  return 'lose';
+}
+
+function playMove(playerMove){
+  if(isPlaying) return;
+  isPlaying = true;
+  $('play-btn').disabled = true;
+
+  $('bot-frame').textContent = '🤖';
+  $('bot-label').textContent = '...';
+  $('your-label').textContent = EMOJI[playerMove] || '?';
+
+  let count = 3;
+  setStatus(count, 'Get ready…');
+  const iv = setInterval(()=>{
+    count--;
+    if(count > 0){ setStatus(count); }
+    else if(count === 0){ setStatus('Shoot!'); }
+    else {
+      clearInterval(iv);
+      const botMove = botPick();
+      const bf = $('bot-frame');
+      bf.textContent = EMOJI[botMove];
+      bf.classList.add('bounce');
+      setTimeout(()=>bf.classList.remove('bounce'), 400);
+      $('bot-label').textContent = botMove;
+      $('your-label').textContent = playerMove;
+
+      const result = judge(playerMove, botMove);
+      if(result==='win'){
+        scores.you++;
+        setStatus('You Win!', playerMove+' beats '+botMove, 'win');
+        addHistory('win');
+      } else if(result==='lose'){
+        scores.bot++;
+        setStatus('Bot Wins!', botMove+' beats '+playerMove, 'lose');
+        addHistory('lose');
+      } else {
+        scores.tie++;
+        setStatus("It's a Tie!", 'Both played '+playerMove, 'tie');
+        addHistory('tie');
+      }
+      updateScores();
+
+      setTimeout(()=>{
+        isPlaying = false;
+        $('play-btn').disabled = false;
+        if(mode==='camera' && camReady){
+          setStatus('Show your hand', 'then click Play Round');
         }
+      }, 1800);
+    }
+  }, 700);
+}
 
-        async function loop() {
-            webcam.update(); // update the webcam frame
-            await predict();
-            window.requestAnimationFrame(loop);
-        }
+function handlePlay(){
+  if(mode==='buttons') return;
+  if(!camReady){ startCamera(); return; }
+  if(detectedMove==='None'){
+    setStatus('No hand detected','Show Rock, Paper, or Scissors');
+    return;
+  }
+  playMove(detectedMove);
+}
 
-        // Run the webcam image through the image model
-        async function predict() {
-            const prediction = await model.predict(webcam.canvas);
-            for (let i = 0; i < maxPredictions; i++) {
-                const classPrediction =
-                    prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(0) + "%";
-                labelContainer.childNodes[i].innerHTML = classPrediction;
-            }
-        }
-    </script>
+function toggleMode(){
+  if(mode==='camera'){
+    mode='buttons';
+    stopCamera();
+    $('mode-btn').textContent = 'Switch to camera';
+    $('play-btn').style.display = 'none';
+    $('move-buttons').classList.add('visible');
+    $('conf-wrap').style.display = 'none';
+    $('cam-frame').innerHTML = '<div class="cam-placeholder">Button<br>mode active</div>';
+    $('your-label').textContent = '—';
+    setStatus('Pick your move','tap a hand below');
+  } else {
+    mode='camera';
+    $('mode-btn').textContent = 'Switch to buttons';
+    $('play-btn').style.display = 'block';
+    $('play-btn').textContent = 'Enable Camera';
+    $('move-buttons').classList.remove('visible');
+    $('cam-frame').innerHTML = '<div class="cam-placeholder" id="cam-ph">Enable your<br>camera to play</div>';
+    $('your-label').textContent = '—';
+    setStatus('Ready','Enable camera or switch to button mode');
+    camReady = false;
+  }
+}
+
+function stopCamera(){
+  loopActive = false;
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if(tmWebcam){ try{ tmWebcam.stop(); }catch(e){} tmWebcam=null; }
+  camReady = false;
+}
+
+async function startCamera(){
+  const btn = $('play-btn');
+  btn.disabled = true; btn.textContent = 'Starting…';
+  setStatus('Requesting camera','Please allow camera access');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+  } catch(e){
+    setStatus('Camera blocked','Switch to button mode to play');
+    btn.disabled = false; btn.textContent = 'Try Again';
+    $('cam-frame').innerHTML = '<div class="cam-placeholder">Camera access<br>denied</div>';
+    return;
+  }
+
+  const vid = document.createElement('video');
+  vid.srcObject = stream; vid.autoplay = true; vid.playsInline = true; vid.muted = true;
+  $('cam-frame').innerHTML = '';
+  $('cam-frame').appendChild(vid);
+  $('conf-wrap').style.display = 'block';
+
+  camReady = true;
+  btn.disabled = false; btn.textContent = 'Play Round';
+  setStatus('Show your hand','then click Play Round');
+
+  // Try TM model, fallback to pixel detection
+  if(typeof tmImage !== 'undefined'){
+    loadTMModel(vid);
+  } else {
+    pixelLoop(vid);
+  }
+}
+
+async function loadTMModel(vid){
+  setStatus('Loading model…','one moment');
+  try {
+    const URL = 'https://teachablemachine.withgoogle.com/models/dEdYT05_B/';
+    tmModel = await tmImage.load(URL+'model.json', URL+'metadata.json');
+    tmWebcam = new tmImage.Webcam(200, 200, true);
+    await tmWebcam.setup();
+    await tmWebcam.play();
+    const cf = $('cam-frame');
+    cf.innerHTML = '';
+    cf.appendChild(tmWebcam.canvas);
+    loopActive = true;
+    setStatus('Show your hand','then click Play Round');
+
+    async function loop(){
+      if(!loopActive) return;
+      tmWebcam.update();
+      const preds = await tmModel.predict(tmWebcam.canvas);
+      let best = {prob:0,name:'None'};
+      preds.forEach(p=>{ if(p.probability>best.prob) best={prob:p.probability,name:p.className}; });
+      if(best.prob>0.65 && MOVES.includes(best.name)) detectedMove=best.name;
+      else detectedMove='None';
+      $('conf-fill').style.width = Math.round(best.prob*100)+'%';
+      if(!isPlaying) $('your-label').textContent = detectedMove==='None'?'—':EMOJI[detectedMove]+' '+detectedMove;
+      requestAnimationFrame(loop);
+    }
+    loop();
+  } catch(e){
+    pixelLoop(document.querySelector('#cam-frame video'));
+  }
+}
+
+function pixelLoop(vid){
+  setStatus('Show your hand','then click Play Round');
+  const canvas = document.createElement('canvas');
+  canvas.width=200; canvas.height=200;
+  const ctx = canvas.getContext('2d');
+  loopActive = true;
+  function loop(){
+    if(!loopActive||!stream) return;
+    if(vid && vid.readyState>=2){
+      ctx.drawImage(vid,0,0,200,200);
+      const d=ctx.getImageData(0,0,200,200).data;
+      let skin=0;
+      for(let i=0;i<d.length;i+=4){
+        const r=d[i],g=d[i+1],b=d[i+2];
+        if(r>90&&g>40&&b>20&&r>g&&r>b&&(r-Math.min(g,b))>15) skin++;
+      }
+      const ratio=skin/(200*200);
+      let move='None';
+      if(ratio>0.28) move='Paper';
+      else if(ratio>0.14) move='Rock';
+      else if(ratio>0.06) move='Scissors';
+      detectedMove=move;
+      $('conf-fill').style.width=Math.min(ratio*250,100)+'%';
+      if(!isPlaying) $('your-label').textContent=move==='None'?'—':EMOJI[move]+' '+move;
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// Init
+updateScores();
+setStatus('Ready','Enable camera or switch to button mode');
+</script>
 </body>
 </html>
