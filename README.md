@@ -1,4 +1,4 @@
-Project created with assistance grom Gemini AI
+Project created with assistance from Gemini AI
 
 Link to conversation: [https://gemini.google.com/share/51fe83d335fc](url)
 
